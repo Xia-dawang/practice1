@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\C#\u7EC3\u4E60\\TutorialZero_3\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{6F2D0BE7-284B-4748-AE80-E24D243BA811}|TutorialZero_3\\TutorialZero_3.vcxproj|E:\\C#\u7EC3\u4E60\\TutorialZero_3\\TutorialZero_3\\\u6E90.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{6F2D0BE7-284B-4748-AE80-E24D243BA811}|TutorialZero_3\\TutorialZero_3.vcxproj|solutionrelative:TutorialZero_3\\\u6E90.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "\u6E90.cpp",
+              "DocumentMoniker": "E:\\C#\u7EC3\u4E60\\TutorialZero_3\\TutorialZero_3\\\u6E90.cpp",
+              "RelativeDocumentMoniker": "TutorialZero_3\\\u6E90.cpp",
+              "ToolTip": "E:\\C#\u7EC3\u4E60\\TutorialZero_3\\TutorialZero_3\\\u6E90.cpp",
+              "RelativeToolTip": "TutorialZero_3\\\u6E90.cpp",
+              "ViewState": "AgIAAB0AAAAAAAAAAAAUwEgAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-02-23T14:07:09.217Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
