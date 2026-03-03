@@ -118,6 +118,10 @@ public:
 		delete anim_right;
 	}
 
+	/// <summary>
+	/// 处理玩家的操作信息
+	/// </summary>
+	/// <param name="msg"></param>
 	void ProcessEvent(const ExMessage& msg)
 	{
 		//if (msg.message == WM_KEYDOWN)
@@ -168,6 +172,9 @@ public:
 		}
 	}
 
+	/// <summary>
+	/// 处理玩家移动
+	/// </summary>
 	void Move()
 	{
 		int dir_x = moveRight - moveLeft;
@@ -188,6 +195,10 @@ public:
 		if (player_pos.y > windowH - PLAYER_HEIGHT) player_pos.y = windowH - PLAYER_HEIGHT;
 	}
 
+	/// <summary>
+	/// 处理绘制玩家
+	/// </summary>
+	/// <param name="delta"></param>
 	void Draw(int delta)
 	{
 		int pos_shadow_x = player_pos.x + (PLAYER_WIDTH / 2 - SHADOW_WIDTH / 2);
@@ -212,6 +223,11 @@ public:
 		{
 			anim_right->Play(player_pos.x, player_pos.y, delta);
 		}
+	}
+
+	POINT GetPosition() const
+	{
+		return player_pos;
 	}
 
 private:
@@ -240,6 +256,149 @@ void DrawPlayer(int delta, int dir_x)
 	
 }
 
+class Bullet
+{
+public:
+	POINT position = { 0, 0 };
+
+public:
+	Bullet() = default;
+	~Bullet() = default;
+
+	void Draw() const
+	{
+		setlinecolor(RGB(255, 155, 50));
+		setfillcolor(RGB(200, 75, 10));
+		fillcircle(position.x, position.y, RADIUS);
+	}
+private:
+	const int RADIUS = 10;
+};
+
+class Enemy
+{
+public:
+	Enemy()
+	{
+		loadimage(&enemy_shadow, _T("img/shadow_enemy.png"));
+		anim_left = new Animation(_T("img/enemy_left_%d.png"), 6, 45);
+		anim_right = new Animation(_T("img/enemy_right_%d.png"), 6, 45);
+
+		enum class SpawnEdge
+		{
+			Up = 0,
+			Down,
+			Left,
+			Right
+		};
+
+		SpawnEdge edge = (SpawnEdge)(rand() % 4);
+		switch (edge)
+		{
+		case SpawnEdge::Up:
+			position.x = rand() % windowW;
+			position.y = -FRAME_HEIGHT;
+			break;
+		case SpawnEdge::Down:
+			position.x = rand() % windowW;
+			position.y = windowH;
+			break;
+		case SpawnEdge::Left:
+			position.x = -FRAME_WIDTH;
+			position.y = rand() % windowH;
+			break;
+		case SpawnEdge::Right:
+			position.x = windowW;
+			position.y = rand() % windowH;
+			break;
+		default:
+			break;
+		}
+	}
+
+	bool CheckBulletCollision(const Bullet& bullet)
+	{
+		return false;
+	}
+
+	bool CheckBullectCollision(const Player& player)
+	{
+		return false;
+	}
+	
+	void Draw(int delta)
+	{
+		int pos_shadow_x = position.x + (FRAME_WIDTH - SHADOW_WIDTH) / 2;
+		int pos_shadow_y = position.y;
+		putimage_alpha(pos_shadow_x, pos_shadow_y, &enemy_shadow);
+
+		if (facing_left)
+		{
+			anim_left->Play(position.x, position.y, delta);
+		}
+		else
+		{
+			anim_right->Play(position.x, position.y, delta);
+		}
+	}
+
+	void Move(const Player& player)
+	{
+		const POINT& player_position = player.GetPosition();
+		int dir_x = player_position.x - position.x;
+		int dir_y = player_position.y - position.y;
+		double len_dir = sqrt(dir_x * dir_x + dir_y * dir_y);
+		if (len_dir != 0)
+		{
+			double normalize_x = dir_x / len_dir;
+			double normalize_y = dir_y / len_dir;
+			position.x += (int)(normalize_x * SPEED);
+			position.y += (int)(normalize_y * SPEED);
+		}
+
+		if (dir_x > 0)
+		{
+			facing_left = false;
+		}
+		else if (dir_x < 0)
+		{
+			facing_left = true;
+		}
+	}
+
+	~Enemy()
+	{
+		delete anim_left;
+		delete anim_right;
+	}
+
+	
+
+private:
+	const int SPEED = 2;
+	const int FRAME_WIDTH = 80;		//敌人的宽度
+	const int FRAME_HEIGHT = 80;	//敌人的高度
+	const int SHADOW_WIDTH = 48;	//阴影的宽度
+
+private:
+	IMAGE enemy_shadow;
+	Animation* anim_left;
+	Animation* anim_right;
+	POINT position = { 0,0 };
+	bool facing_left = false;
+};
+
+
+
+void TryGenerateEnemy(std::vector<Enemy*>& enemy_list)
+{
+	const int INTERVAL = 100;
+	static int counter = 0;
+	if ((++counter) % INTERVAL == 0)
+		enemy_list.push_back(new Enemy);
+}
+
+
 int main()
 {
 
@@ -249,6 +408,7 @@ int main()
 	IMAGE img_background;
 	Player player;
 
+	std::vector<Enemy*> enemy_list;
 	//bool moveUp = false;
 	//bool moveDown = false;
 	//bool moveLeft = false;
@@ -267,9 +427,6 @@ int main()
 		{
 			player.ProcessEvent(msg);
 		}
-
-		
-
 		/*if (moveUp) player_pos.y -= PLAYER_SPEED;
 		if (moveDown) player_pos.y += PLAYER_SPEED;
 		if (moveLeft) player_pos.x -= PLAYER_SPEED;
@@ -285,10 +442,19 @@ int main()
 		cleardevice();
 		putimage(0, 0, &img_background);
 		player.Move();
+		TryGenerateEnemy(enemy_list);
+		for (Enemy* enemy : enemy_list)
+		{
+			enemy->Move(player);
+		}
 		//直接使用putimage会有黑框。因为这个函数没有封装透明度信息，需要自己写。
 		//putimage_alpha(player_pos.x, player_pos.y, &img_player_left[anim_current_index]);
 		//DrawPlayer(1000/30, moveRight - moveLeft);
 		player.Draw(1000 / 30);
+		for (Enemy* enemy : enemy_list)
+		{
+			enemy->Draw(1000 / 30);
+		}
 		
 		FlushBatchDraw();
 
