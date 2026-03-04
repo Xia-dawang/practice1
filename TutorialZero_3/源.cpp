@@ -230,6 +230,16 @@ public:
 		return player_pos;
 	}
 
+	int GetWeight() const
+	{
+		return PLAYER_WIDTH;
+	}
+
+	int GetHeight() const
+	{
+		return PLAYER_HEIGHT;
+	}
+
 private:
 	const int PLAYER_SPEED = 10;
 	const int PLAYER_WIDTH = 80;
@@ -318,12 +328,19 @@ public:
 
 	bool CheckBulletCollision(const Bullet& bullet)
 	{
-		return false;
+		bool is_overlap_x = bullet.position.x >= position.x && bullet.position.x <= position.x + FRAME_WIDTH;
+		bool is_overlap_y = bullet.position.y >= position.y && bullet.position.y <= position.y + FRAME_HEIGHT;
+		return is_overlap_x && is_overlap_y;
 	}
 
-	bool CheckBullectCollision(const Player& player)
+	//为了追求简单，将enemy的中心点作为碰撞点，而不是两个矩形是否有交点作为碰撞条件
+	bool CheckPlayerCollision(const Player& player)
 	{
-		return false;
+		POINT player_pos = player.GetPosition();
+		POINT enemy_center = { position.x + FRAME_WIDTH / 2, position.y + FRAME_HEIGHT / 2 };
+		bool is_overlap_x = enemy_center.x >= player_pos.x && enemy_center.x <= player_pos.x + player.GetWeight();
+		bool is_overlap_y = enemy_center.y >= player_pos.y && enemy_center.y <= player_pos.y + player.GetHeight();
+		return is_overlap_x && is_overlap_y;
 	}
 	
 	void Draw(int delta)
@@ -398,6 +415,22 @@ void TryGenerateEnemy(std::vector<Enemy*>& enemy_list)
 		enemy_list.push_back(new Enemy);
 }
 
+//更新子弹位置
+void UpdateBullets(std::vector<Bullet>& bullet_list, const Player& player)
+{
+	const double RADIAL_SPEED = 0.0045;							//径向波动速度；
+	const double TANGENT_SPEED = 0.0055;						//切向波动速读；
+	double radian_interval = 2 * 3.14159 / bullet_list.size();	//子弹间的弧度间隔
+	POINT player_pos = player.GetPosition();
+	double radius = 100 + 25 * sin(GetTickCount() * RADIAL_SPEED);
+	for (size_t i = 0; i < bullet_list.size(); i++)
+	{
+		double radian = GetTickCount() * TANGENT_SPEED + radian_interval;	//当前子弹所在弧度值
+		bullet_list[i].position.x = player_pos.x + player.GetWeight() / 2 + (int)(radius * sin(radian));
+		bullet_list[i].position.y = player_pos.y + player.GetHeight() / 2 + (int)(radius * cos(radian));
+	}
+}
+
 
 int main()
 {
@@ -409,6 +442,7 @@ int main()
 	Player player;
 
 	std::vector<Enemy*> enemy_list;
+	std::vector<Bullet> bullet_list(3);
 	//bool moveUp = false;
 	//bool moveDown = false;
 	//bool moveLeft = false;
@@ -442,10 +476,21 @@ int main()
 		cleardevice();
 		putimage(0, 0, &img_background);
 		player.Move();
+		UpdateBullets(bullet_list, player);
 		TryGenerateEnemy(enemy_list);
 		for (Enemy* enemy : enemy_list)
 		{
 			enemy->Move(player);
+		}
+
+		for (Enemy* enemy : enemy_list)
+		{
+			if (enemy->CheckPlayerCollision(player))
+			{
+				MessageBox(GetHWnd(), _T("扣1观看战败CG"), _T("游戏结束"), MB_OK);
+				isContinue = false;
+				break;
+			}
 		}
 		//直接使用putimage会有黑框。因为这个函数没有封装透明度信息，需要自己写。
 		//putimage_alpha(player_pos.x, player_pos.y, &img_player_left[anim_current_index]);
@@ -454,6 +499,10 @@ int main()
 		for (Enemy* enemy : enemy_list)
 		{
 			enemy->Draw(1000 / 30);
+		}
+		for (const Bullet& bullet : bullet_list)
+		{
+			bullet.Draw();
 		}
 		
 		FlushBatchDraw();
